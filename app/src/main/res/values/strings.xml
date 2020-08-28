@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Space Explorer</string>
+    <string name="apiKey">3Rq07gdQgGYLxNvsYkwMRin502IkHxITEtuxqi66</string>
+    <string name="baseUrl">https://api.nasa.gov/planetary/</string>
+</resources>
