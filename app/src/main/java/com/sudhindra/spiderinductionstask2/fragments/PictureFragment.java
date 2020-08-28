@@ -13,7 +13,7 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.sudhindra.spiderinductionstask2.R;
-import com.sudhindra.spiderinductionstask2.api.APODApi;
+import com.sudhindra.spiderinductionstask2.apis.APODApi;
 import com.sudhindra.spiderinductionstask2.databinding.FragmentPictureBinding;
 import com.sudhindra.spiderinductionstask2.models.APOD;
 
@@ -37,6 +37,26 @@ public class PictureFragment extends Fragment {
 
     private String apiKey;
 
+    private Callback<APOD> apodCallback = new Callback<APOD>() {
+        @Override
+        public void onResponse(Call<APOD> call, Response<APOD> response) {
+            if (!response.isSuccessful()) {
+                Log.i(TAG, "onResponse: " + response);
+                return;
+            }
+
+            binding.progressBar.setVisibility(View.GONE);
+            binding.scrollView.setVisibility(View.VISIBLE);
+            binding.setApod(response.body());
+        }
+
+        @Override
+        public void onFailure(Call<APOD> call, Throwable t) {
+            Toast.makeText(requireContext(), "Failed to fetch Image", Toast.LENGTH_SHORT).show();
+            Log.i(TAG, "onFailure: ");
+        }
+    };
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -50,7 +70,7 @@ public class PictureFragment extends Fragment {
 
         Retrofit retrofit = new Retrofit.Builder()
                 .addConverterFactory(GsonConverterFactory.create())
-                .baseUrl(getString(R.string.baseUrl))
+                .baseUrl(getString(R.string.apodBaseUrl))
                 .build();
 
         picker = MaterialDatePicker.Builder.datePicker().setTitleText("Pick a Date").build();
@@ -76,48 +96,12 @@ public class PictureFragment extends Fragment {
 
     private void getAPODForToday() {
         Call<APOD> call = api.getAPODForToday(apiKey);
-        call.enqueue(new Callback<APOD>() {
-            @Override
-            public void onResponse(Call<APOD> call, Response<APOD> response) {
-                if (!response.isSuccessful()) {
-                    Log.i(TAG, "onResponse: " + response);
-                    return;
-                }
-
-                binding.progressBar.setVisibility(View.GONE);
-                binding.scrollView.setVisibility(View.VISIBLE);
-                binding.setApod(response.body());
-            }
-
-            @Override
-            public void onFailure(Call<APOD> call, Throwable t) {
-                Toast.makeText(requireContext(), "Failed to fetch Image", Toast.LENGTH_SHORT).show();
-                Log.i(TAG, "onFailure: ");
-            }
-        });
+        call.enqueue(apodCallback);
     }
 
     private void getAPOD(String day) {
         Call<APOD> call = api.getAPOD(day, apiKey);
-        call.enqueue(new Callback<APOD>() {
-            @Override
-            public void onResponse(Call<APOD> call, Response<APOD> response) {
-                if (!response.isSuccessful()) {
-                    Log.i(TAG, "onResponse: " + response);
-                    return;
-                }
-
-                binding.progressBar.setVisibility(View.GONE);
-                binding.scrollView.setVisibility(View.VISIBLE);
-                binding.setApod(response.body());
-            }
-
-            @Override
-            public void onFailure(Call<APOD> call, Throwable t) {
-                Toast.makeText(requireContext(), "Failed to fetch Image", Toast.LENGTH_SHORT).show();
-                Log.i(TAG, "onFailure: ");
-            }
-        });
+        call.enqueue(apodCallback);
     }
 
     private void showDatePicker() {

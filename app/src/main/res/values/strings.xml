@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Space Explorer</string>
     <string name="apiKey">3Rq07gdQgGYLxNvsYkwMRin502IkHxITEtuxqi66</string>
-    <string name="baseUrl">https://api.nasa.gov/planetary/</string>
+    <string name="apodBaseUrl">https://api.nasa.gov/planetary/</string>
+    <string name="searchBaseUrl">https://images-api.nasa.gov/</string>
 </resources>

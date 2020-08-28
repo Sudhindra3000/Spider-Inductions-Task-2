@@ -1,4 +1,4 @@
-package com.sudhindra.spiderinductionstask2.api;
+package com.sudhindra.spiderinductionstask2.apis;
 
 import com.sudhindra.spiderinductionstask2.models.APOD;
 
