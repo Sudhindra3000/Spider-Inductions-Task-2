@@ -1,5 +1,6 @@
 package com.sudhindra.spiderinductionstask2.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,7 +14,9 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.google.gson.Gson;
 import com.sudhindra.spiderinductionstask2.R;
+import com.sudhindra.spiderinductionstask2.activities.DetailsActivity;
 import com.sudhindra.spiderinductionstask2.adapters.SearchAdapter;
 import com.sudhindra.spiderinductionstask2.apis.SearchApi;
 import com.sudhindra.spiderinductionstask2.databinding.FragmentSearchBinding;
@@ -112,7 +115,9 @@ public class SearchFragment extends Fragment {
     }
 
     private void showDetails(int pos) {
-
+        Intent intent = new Intent(requireContext(), DetailsActivity.class);
+        intent.putExtra("data", new Gson().toJson(data.get(pos)));
+        startActivity(intent);
     }
 
     @Override

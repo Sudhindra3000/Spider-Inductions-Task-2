@@ -9,4 +9,9 @@
         <item name="android:windowLightNavigationBar">true</item>
     </style>
 
+    <style name="AppTheme.ToolbarTheme">
+        <item name="colorControlNormal">@android:color/white</item>
+        <item name="android:colorControlHighlight">@android:color/white</item>
+    </style>
+
 </resources>
