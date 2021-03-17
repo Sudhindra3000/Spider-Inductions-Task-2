@@ -1,128 +1,108 @@
-package com.sudhindra.spiderinductionstask2.fragments;
+package com.sudhindra.spiderinductionstask2.fragments
 
-import android.content.Intent;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.SearchView;
-import android.widget.Toast;
+import android.content.Intent
+import android.os.Bundle
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.SearchView
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.gson.Gson
+import com.sudhindra.spiderinductionstask2.R
+import com.sudhindra.spiderinductionstask2.activities.DetailsActivity
+import com.sudhindra.spiderinductionstask2.adapters.SearchAdapter
+import com.sudhindra.spiderinductionstask2.apis.SearchApi
+import com.sudhindra.spiderinductionstask2.databinding.FragmentSearchBinding
+import com.sudhindra.spiderinductionstask2.models.SearchItem
+import com.sudhindra.spiderinductionstask2.models.SearchResult
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
+class SearchFragment : Fragment() {
 
-import com.google.gson.Gson;
-import com.sudhindra.spiderinductionstask2.R;
-import com.sudhindra.spiderinductionstask2.activities.DetailsActivity;
-import com.sudhindra.spiderinductionstask2.adapters.SearchAdapter;
-import com.sudhindra.spiderinductionstask2.apis.SearchApi;
-import com.sudhindra.spiderinductionstask2.databinding.FragmentSearchBinding;
-import com.sudhindra.spiderinductionstask2.models.SearchItem;
-import com.sudhindra.spiderinductionstask2.models.SearchResult;
+    private lateinit var binding: FragmentSearchBinding
+    private lateinit var searchApi: SearchApi
 
-import java.util.ArrayList;
+    private var data = arrayListOf<SearchItem.Data>()
+    private var adapter = SearchAdapter(data)
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
-
-public class SearchFragment extends Fragment {
-
-    private static final String TAG = "SearchFragment";
-    private FragmentSearchBinding binding;
-
-    private SearchApi searchApi;
-
-    private SearchAdapter adapter;
-    private ArrayList<SearchItem.Data> data;
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        binding = FragmentSearchBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        binding = FragmentSearchBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        binding.searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String s) {
-                return false;
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(s: String): Boolean {
+                return false
             }
 
-            @Override
-            public boolean onQueryTextChange(String s) {
-                if (!s.trim().isEmpty())
-                    search(s);
-                else {
-                    data.clear();
-                    adapter.notifyDataSetChanged();
+            override fun onQueryTextChange(s: String): Boolean {
+                if (s.isNotBlank()) search(s) else {
+                    data.clear()
+                    adapter.notifyDataSetChanged()
                 }
-                return false;
+                return false
             }
-        });
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .addConverterFactory(GsonConverterFactory.create())
-                .baseUrl(getString(R.string.searchBaseUrl))
-                .build();
-
-        searchApi = retrofit.create(SearchApi.class);
-
-        buildRecyclerView();
+        })
+        val retrofit = Retrofit.Builder()
+            .addConverterFactory(GsonConverterFactory.create())
+            .baseUrl(getString(R.string.searchBaseUrl))
+            .build()
+        searchApi = retrofit.create(SearchApi::class.java)
+        buildRecyclerView()
     }
 
-    private void search(String query) {
-        Call<SearchResult> call = searchApi.getSearchResult(query, 1);
-        call.enqueue(new Callback<SearchResult>() {
-            @Override
-            public void onResponse(Call<SearchResult> call, Response<SearchResult> response) {
-                if (!response.isSuccessful()) {
-                    Log.i(TAG, "onResponse: " + response);
-                    return;
+    private fun search(query: String) {
+        val call = searchApi.getSearchResult(query, 1)
+        call!!.enqueue(object : Callback<SearchResult?> {
+            override fun onResponse(call: Call<SearchResult?>, response: Response<SearchResult?>) {
+                if (!response.isSuccessful) {
+                    Log.i(TAG, "onResponse: $response")
+                    return
                 }
-
-                SearchResult searchResult = response.body();
-                for (SearchItem searchItem : searchResult.getCollection().getSearchItems()) {
-                    data.addAll(searchItem.getData());
+                val searchResult = response.body()
+                for (searchItem in searchResult!!.collection.searchItems) {
+                    data.addAll(searchItem.data)
                 }
-                adapter.notifyDataSetChanged();
+                adapter.notifyDataSetChanged()
             }
 
-            @Override
-            public void onFailure(Call<SearchResult> call, Throwable t) {
-                Toast.makeText(requireContext(), "Failed to Fetch Data", Toast.LENGTH_SHORT).show();
+            override fun onFailure(call: Call<SearchResult?>, t: Throwable) {
+                Toast.makeText(requireContext(), "Failed to Fetch Data", Toast.LENGTH_SHORT).show()
             }
-        });
+        })
     }
 
-    private void buildRecyclerView() {
-        data = new ArrayList<>();
-        adapter = new SearchAdapter(data);
-        adapter.setListener(this::showDetails);
-
-        binding.recyclerView.setHasFixedSize(true);
-        binding.recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        binding.recyclerView.setAdapter(adapter);
+    private fun buildRecyclerView() {
+        adapter.setListener { pos: Int -> showDetails(pos) }
+        binding.recyclerView.setHasFixedSize(true)
+        binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        binding.recyclerView.adapter = adapter
     }
 
-    private void showDetails(int pos) {
-        Intent intent = new Intent(requireContext(), DetailsActivity.class);
-        intent.putExtra("data", new Gson().toJson(data.get(pos)));
-        startActivity(intent);
+    private fun showDetails(pos: Int) {
+        val intent = Intent(requireContext(), DetailsActivity::class.java)
+        intent.putExtra("data", Gson().toJson(data[pos]))
+        startActivity(intent)
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        binding = null;
+    override fun onDestroy() {
+        super.onDestroy()
+//        binding = null
+    }
+
+    companion object {
+        private const val TAG = "SearchFragment"
     }
 }
