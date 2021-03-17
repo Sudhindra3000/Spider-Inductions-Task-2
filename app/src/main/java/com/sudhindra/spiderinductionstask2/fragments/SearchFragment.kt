@@ -91,11 +91,6 @@ class SearchFragment : Fragment() {
         startActivity(intent)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-//        binding = null
-    }
-
     companion object {
         private const val TAG = "SearchFragment"
     }
