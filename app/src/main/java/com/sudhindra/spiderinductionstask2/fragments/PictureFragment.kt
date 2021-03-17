@@ -1,20 +1,20 @@
 package com.sudhindra.spiderinductionstask2.fragments
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.sudhindra.spiderinductionstask2.R
 import com.sudhindra.spiderinductionstask2.apis.APODApi
 import com.sudhindra.spiderinductionstask2.databinding.FragmentPictureBinding
 import com.sudhindra.spiderinductionstask2.models.APOD
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.text.SimpleDateFormat
@@ -26,25 +26,8 @@ class PictureFragment : Fragment() {
 
     private lateinit var picker: MaterialDatePicker<Long>
 
-    private var api: APODApi? = null
-    private var apiKey: String? = null
-
-    private val apodCallback: Callback<APOD?> = object : Callback<APOD?> {
-        override fun onResponse(call: Call<APOD?>, response: Response<APOD?>) {
-            if (!response.isSuccessful) {
-                Log.i(TAG, "onResponse: $response")
-                return
-            }
-            binding.progressBar.visibility = View.GONE
-            binding.scrollView.visibility = View.VISIBLE
-            binding.apod = response.body()
-        }
-
-        override fun onFailure(call: Call<APOD?>, t: Throwable) {
-            Toast.makeText(requireContext(), "Failed to fetch Image", Toast.LENGTH_SHORT).show()
-            Log.i(TAG, "onFailure: ")
-        }
-    }
+    private lateinit var api: APODApi
+    private lateinit var apiKey: String
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -77,20 +60,31 @@ class PictureFragment : Fragment() {
     }
 
     private fun getAPODForToday() {
-        val call = api!!.getAPODForToday(apiKey)
-        call!!.enqueue(apodCallback)
+        handleRequest { api.getAPODForToday(apiKey) }
     }
 
-    private fun getAPOD(day: String) {
-        val call = api!!.getAPOD(day, apiKey)
-        call!!.enqueue(apodCallback)
+    private fun getAPOD(day: String) = handleRequest { api.getAPOD(day, apiKey) }
+
+    private fun handleRequest(requestCode: suspend () -> APOD) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val res = requestCode()
+                withContext(Dispatchers.Main) {
+                    binding.progressBar.visibility = View.GONE
+                    binding.scrollView.visibility = View.VISIBLE
+                    binding.apod = res
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Failed to fetch Image", Toast.LENGTH_SHORT)
+                        .show()
+                }
+            }
+        }
     }
 
     private fun showDatePicker() {
         picker.show(requireActivity().supportFragmentManager, "picker")
-    }
-
-    companion object {
-        private const val TAG = "PictureFragment"
     }
 }
