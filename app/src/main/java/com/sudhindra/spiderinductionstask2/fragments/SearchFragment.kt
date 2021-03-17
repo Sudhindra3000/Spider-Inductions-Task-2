@@ -2,13 +2,13 @@ package com.sudhindra.spiderinductionstask2.fragments
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.gson.Gson
 import com.sudhindra.spiderinductionstask2.R
@@ -17,10 +17,9 @@ import com.sudhindra.spiderinductionstask2.adapters.SearchAdapter
 import com.sudhindra.spiderinductionstask2.apis.SearchApi
 import com.sudhindra.spiderinductionstask2.databinding.FragmentSearchBinding
 import com.sudhindra.spiderinductionstask2.models.SearchItem
-import com.sudhindra.spiderinductionstask2.models.SearchResult
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -64,24 +63,19 @@ class SearchFragment : Fragment() {
     }
 
     private fun search(query: String) {
-        val call = searchApi.getSearchResult(query, 1)
-        call!!.enqueue(object : Callback<SearchResult?> {
-            override fun onResponse(call: Call<SearchResult?>, response: Response<SearchResult?>) {
-                if (!response.isSuccessful) {
-                    Log.i(TAG, "onResponse: $response")
-                    return
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val searchResult = searchApi.getSearchResult(query, 1)
+                searchResult.collection.searchItems.forEach { data.addAll(it.data) }
+                withContext(Dispatchers.Main) { adapter.notifyDataSetChanged() }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Failed to Fetch Data", Toast.LENGTH_SHORT)
+                        .show()
                 }
-                val searchResult = response.body()
-                for (searchItem in searchResult!!.collection.searchItems) {
-                    data.addAll(searchItem.data)
-                }
-                adapter.notifyDataSetChanged()
             }
-
-            override fun onFailure(call: Call<SearchResult?>, t: Throwable) {
-                Toast.makeText(requireContext(), "Failed to Fetch Data", Toast.LENGTH_SHORT).show()
-            }
-        })
+        }
     }
 
     private fun buildRecyclerView() {
