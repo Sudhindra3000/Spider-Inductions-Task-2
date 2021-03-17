@@ -3,4 +3,5 @@
     <string name="apiKey">3Rq07gdQgGYLxNvsYkwMRin502IkHxITEtuxqi66</string>
     <string name="apodBaseUrl">https://api.nasa.gov/planetary/</string>
     <string name="searchBaseUrl">https://images-api.nasa.gov/</string>
+    <string name="title_activity_test">TestAct</string>
 </resources>
