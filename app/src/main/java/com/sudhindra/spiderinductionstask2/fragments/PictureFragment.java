@@ -37,7 +37,7 @@ public class PictureFragment extends Fragment {
 
     private String apiKey;
 
-    private Callback<APOD> apodCallback = new Callback<APOD>() {
+    private Callback<APOD> apodCallback = new Callback<>() {
         @Override
         public void onResponse(Call<APOD> call, Response<APOD> response) {
             if (!response.isSuccessful()) {
